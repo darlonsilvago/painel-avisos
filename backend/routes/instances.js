@@ -1,7 +1,7 @@
 // backend/routes/instances.js
 const express = require('express');
 const { pool } = require('../db');
-const { painelTokenMiddleware } = require('../middleware/painelToken');
+const { authMiddleware } = require('../middleware/auth');
 const {
   evoCreateInstance,
   evoGetQrCode,
@@ -11,7 +11,8 @@ const {
 const router = express.Router();
 
 // todas essas rotas exigem login
-router.use(painelTokenMiddleware);
+
+router.use(authMiddleware);
 
 // POST /api/instances  -> cria instância na Evolution e salva no banco
 router.post('/', async (req, res) => {
