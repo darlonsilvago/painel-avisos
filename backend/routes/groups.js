@@ -1,7 +1,7 @@
 // backend/routes/groups.js
 const express = require('express');
 const { pool } = require('../db');
-const { authMiddleware } = require('../middleware/auth');
+const { painelTokenMiddleware } = require('../middleware/painelToken');
 const { evoFetchAllGroups } = require('../services/evolution');
 
 const router = express.Router();
@@ -10,7 +10,7 @@ const router = express.Router();
  * GET /api/groups/:instanceId
  * Lista grupos salvos no Postgres para a instância.
  */
-router.get('/:instanceId', authMiddleware, async (req, res) => {
+router.get('/:instanceId', painelTokenMiddleware, async (req, res) => {
   const { instanceId } = req.params;
 
   try {
@@ -33,7 +33,7 @@ router.get('/:instanceId', authMiddleware, async (req, res) => {
  * POST /api/groups/:instanceId/refresh
  * Busca todos os grupos na Evolution e salva/atualiza na tabela whatsapp_groups.
  */
-router.post('/:instanceId/refresh', authMiddleware, async (req, res) => {
+router.post('/:instanceId/refresh', painelTokenMiddleware, async (req, res) => {
   const { instanceId } = req.params;
 
   try {

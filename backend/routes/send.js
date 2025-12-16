@@ -1,7 +1,7 @@
 // backend/routes/send.js
 const express = require('express');
 const { pool } = require('../db');
-const { authMiddleware } = require('../middleware/auth');
+const { painelTokenMiddleware } = require('../middleware/painelToken');
 const { evoSendText, evoSendMedia } = require('../services/evolution');
 
 
@@ -9,7 +9,7 @@ const { evoSendText, evoSendMedia } = require('../services/evolution');
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(painelTokenMiddleware);
 
 // ==========================
 // FILA DE ENVIO EM MASSA
