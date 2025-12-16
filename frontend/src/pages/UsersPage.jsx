@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-
-const API_BASE =
-  process.env.REACT_APP_API_URL || "https://msg.adfamilia.org/api";
-
+import { api } from "../api/client";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -18,14 +14,6 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  // o AuthContext salva em "auth_token", não em "token"
-  const token = localStorage.getItem("auth_token");
-
-  const api = axios.create({
-    baseURL: API_BASE,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
 
   async function loadUsers() {
     try {
