@@ -1,17 +1,20 @@
 import axios from "axios";
 
-// 👇 MESMA URL que você usa no Postman
-const API_BASE_URL = "http://localhost:3001/api";
+const API_URL = import.meta.env.VITE_API_URL || "https://msg.adfamilia.org/api";
 
-export const api = axios.create({
-  baseURL: API_BASE_URL,
+const api = axios.create({
+  baseURL: API_URL,
 });
 
-// se já tiver o interceptor de token, mantém:
+// Interceptor → sempre injeta o token correto
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
+
+export { api };
