@@ -8,6 +8,33 @@ const router = express.Router();
 // 🔐 todas as rotas exigem JWT
 router.use(authMiddleware);
 
+/**
+ * GET /api/groups/:instanceId
+ * Lista grupos salvos no banco
+ */
+router.get("/:instanceId", async (req, res) => {
+  const { instanceId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT id, group_id, name 
+       FROM whatsapp_groups 
+       WHERE instance_id = $1 
+       ORDER BY name`,
+      [instanceId]
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    console.error("Erro ao listar grupos:", err);
+    return res.status(500).json({ error: "Erro ao listar grupos" });
+  }
+});
+
+/**
+ * POST /api/groups/:instanceId/refresh
+ * Sincroniza grupos com a Evolution API
+ */
 router.post("/:instanceId/refresh", async (req, res) => {
   const { instanceId } = req.params;
 
@@ -26,39 +53,33 @@ router.post("/:instanceId/refresh", async (req, res) => {
     let groups;
     try {
       groups = await evoFetchAllGroups(evoInstanceId);
-    } catch (evoErr) {
-      console.error(
-        "Erro Evolution:",
-        evoErr?.response?.data || evoErr.message
-      );
-      return res.status(200).json({
-        success: false,
-        message: "Falha ao buscar grupos na Evolution",
+    } catch (err) {
+      console.error("Erro Evolution:", err?.response?.data || err.message);
+      return res.status(500).json({
+        error: "Falha ao buscar grupos na Evolution",
       });
     }
 
     if (!Array.isArray(groups)) {
-      console.error("Formato inesperado:", groups);
-      return res.status(200).json({
-        success: false,
-        message: "Formato inválido retornado pela Evolution",
+      console.error("Formato inválido:", groups);
+      return res.status(500).json({
+        error: "Formato inválido retornado pela Evolution",
       });
     }
 
-    const validGroups = groups.filter((g) => g && (g.id || g.groupId));
+    const validGroups = groups.filter(
+      (g) => g && (g.id || g.groupId)
+    );
 
     if (validGroups.length === 0) {
-      return res.json({
-        success: true,
-        total: 0,
-        message: "Nenhum grupo válido retornado",
-      });
+      return res.json({ success: true, total: 0 });
     }
 
-    // 🔥 AQUI ESTAVA O PROBLEMA: nada era salvo
-    await pool.query("DELETE FROM whatsapp_groups WHERE instance_id = $1", [
-      instanceId,
-    ]);
+    // limpa antes de salvar
+    await pool.query(
+      "DELETE FROM whatsapp_groups WHERE instance_id = $1",
+      [instanceId]
+    );
 
     for (const g of validGroups) {
       await pool.query(
@@ -74,10 +95,13 @@ router.post("/:instanceId/refresh", async (req, res) => {
       );
     }
 
-    res.json({ success: true, total: validGroups.length });
+    return res.json({
+      success: true,
+      total: validGroups.length,
+    });
   } catch (err) {
     console.error("Erro ao sincronizar grupos:", err);
-    res.status(500).json({ error: "Erro interno ao sincronizar grupos" });
+    return res.status(500).json({ error: "Erro interno ao sincronizar grupos" });
   }
 });
 
