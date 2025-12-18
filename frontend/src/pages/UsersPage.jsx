@@ -14,6 +14,7 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   async function loadUsers() {
     try {
@@ -195,21 +196,24 @@ export default function UsersPage() {
         </div>
 
         {/* FORM */}
-        <div
-          style={{
-            width: 350,
-            background: "#0f172a",
-            padding: 20,
-            borderRadius: 12,
-            border: "1px solid #1e293b",
-          }}
-        >
-          <h3>{form.id ? "Editar usuário" : "Novo usuário"}</h3>
+        <div className="card" style={{ Width: "100%" }}>
+          <h2 className="card-title">
+            {form.id ? "Editar usuário" : "Novo usuário"}
+          </h2>
 
-          <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
+          <form
+            onSubmit={handleSubmit}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 2.5fr) minmax(0, 1.4fr)",
+              gap: 32,
+              alignItems: "start",
+            }}
+          >
             <div>
-              <label>Nome</label>
+              <label className="field-label">Nome</label>
               <input
+                className="field-input"
                 type="text"
                 name="name"
                 value={form.name}
@@ -219,8 +223,9 @@ export default function UsersPage() {
             </div>
 
             <div>
-              <label>E-mail</label>
+              <label className="field-label">E-mail</label>
               <input
+                className="field-input"
                 type="email"
                 name="email"
                 value={form.email}
@@ -230,25 +235,56 @@ export default function UsersPage() {
             </div>
 
             <div>
-              <label>Perfil</label>
-              <select name="role" value={form.role} onChange={handleChange}>
+              <label className="field-label">Perfil</label>
+              <select
+                className="field-select"
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+              >
                 <option value="user">Operador</option>
                 <option value="admin">Administrador</option>
               </select>
             </div>
 
             <div>
-              <label>{form.id ? "Nova senha (opcional)" : "Senha"}</label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                {...(!form.id ? { required: true } : {})}
-              />
-            </div>
+              <label className="field-label">
+                {form.id ? "Nova senha (opcional)" : "Senha"}
+              </label>
 
-            <button type="submit" className="btn" disabled={saving}>
+              <div style={{ position: "relative" }}>
+                <input
+                  className="field-input"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  {...(!form.id ? { required: true } : {})}
+                  style={{ paddingRight: 42 }}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  style={{
+                    position: "absolute",
+                    right: 10,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 16,
+                    color: "#9ca3af",
+                  }}
+                  title={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? "x" : "👀"}
+                </button>
+              </div>
+            </div> 
+
+            <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving
                 ? "Salvando..."
                 : form.id
@@ -257,7 +293,7 @@ export default function UsersPage() {
             </button>
 
             {form.id && (
-              <button type="button" className="btn secondary" onClick={newUser}>
+              <button type="button" className="btn btn-soft" onClick={newUser}>
                 Cancelar edição
               </button>
             )}
