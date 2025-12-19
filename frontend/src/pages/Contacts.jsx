@@ -17,6 +17,8 @@ export default function Contacts() {
 
   const [xlsxFile, setXlsxFile] = useState(null);
   const [uploadingXlsx, setUploadingXlsx] = useState(false);
+  
+
 
   async function handleUploadXlsx(e) {
     e.preventDefault();
@@ -97,6 +99,8 @@ export default function Contacts() {
       return res.data;
     },
   });
+
+  const safeContacts = Array.isArray(contacts) ? contacts : [];
 
   // Criar / editar contato (1 em 1)
   const saveContactMutation = useMutation({
@@ -680,7 +684,7 @@ export default function Contacts() {
           <p style={{ fontSize: 13, color: "#9ca3af" }}>
             Carregando contatos...
           </p>
-        ) : !contacts || contacts.length === 0 ? (
+        ) : safeContacts.length === 0 ? (
           <p style={{ fontSize: 13, color: "#9ca3af" }}>
             Nenhum contato encontrado.
           </p>
@@ -700,7 +704,7 @@ export default function Contacts() {
                 </tr>
               </thead>
               <tbody>
-                {contacts.map((c) => (
+                {safeContacts.map((c) => (
                   <tr key={c.id}>
                     <td>{c.name}</td>
                     <td>{c.phone}</td>
