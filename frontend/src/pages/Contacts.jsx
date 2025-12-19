@@ -1,9 +1,5 @@
 import { useState } from "react";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { toast } from "sonner";
 
@@ -18,6 +14,37 @@ export default function Contacts() {
   const [formTags, setFormTags] = useState("");
   const [formNotes, setFormNotes] = useState("");
   const [formActive, setFormActive] = useState(true);
+
+  const [xlsxFile, setXlsxFile] = useState(null);
+  const [uploadingXlsx, setUploadingXlsx] = useState(false);
+
+  async function handleUploadXlsx(e) {
+    e.preventDefault();
+    if (!xlsxFile) {
+      toast.error("Selecione um arquivo Excel (.xlsx).");
+      return;
+    }
+
+    try {
+      setUploadingXlsx(true);
+      const formData = new FormData();
+      formData.append("file", xlsxFile);
+
+      const res = await api.post("/contacts/import-xlsx", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      toast.success(
+        `Importação concluída: ${res.data.saved} de ${res.data.total}`
+      );
+      setXlsxFile(null);
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Erro ao importar planilha.");
+    } finally {
+      setUploadingXlsx(false);
+    }
+  }
 
   // em massa
   const [bulkText, setBulkText] = useState("");
@@ -89,8 +116,7 @@ export default function Contacts() {
       resetForm();
     },
     onError: (err) => {
-      const msg =
-        err.response?.data?.error || "Erro ao salvar contato.";
+      const msg = err.response?.data?.error || "Erro ao salvar contato.";
       toast.error(msg);
     },
   });
@@ -106,8 +132,7 @@ export default function Contacts() {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
     },
     onError: (err) => {
-      const msg =
-        err.response?.data?.error || "Erro ao apagar contato.";
+      const msg = err.response?.data?.error || "Erro ao apagar contato.";
       toast.error(msg);
     },
   });
@@ -125,8 +150,7 @@ export default function Contacts() {
     },
     onError: (err) => {
       const msg =
-        err.response?.data?.error ||
-        "Erro ao salvar contatos em massa.";
+        err.response?.data?.error || "Erro ao salvar contatos em massa.";
       toast.error(msg);
     },
   });
@@ -142,14 +166,15 @@ export default function Contacts() {
     },
     onSuccess: (data) => {
       toast.success(
-        `Participantes encontrados: ${data.totalFound || 0}. Salvos/atualizados: ${data.saved || 0}.`
+        `Participantes encontrados: ${
+          data.totalFound || 0
+        }. Salvos/atualizados: ${data.saved || 0}.`
       );
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
     },
     onError: (err) => {
       const msg =
-        err.response?.data?.error ||
-        "Erro ao importar contatos do grupo.";
+        err.response?.data?.error || "Erro ao importar contatos do grupo.";
       toast.error(msg);
     },
   });
@@ -198,9 +223,7 @@ export default function Contacts() {
 
   function handleDelete(contact) {
     if (
-      !window.confirm(
-        `Apagar o contato "${contact.name}" (${contact.phone})?`
-      )
+      !window.confirm(`Apagar o contato "${contact.name}" (${contact.phone})?`)
     )
       return;
     deleteContactMutation.mutate(contact.id);
@@ -277,8 +300,8 @@ export default function Contacts() {
           Importar contatos de grupos do WhatsApp
         </h1>
         <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 12 }}>
-          Escolha uma instância conectada, selecione um grupo e importe
-          os participantes para sua lista de contatos.
+          Escolha uma instância conectada, selecione um grupo e importe os
+          participantes para sua lista de contatos.
         </p>
 
         <form
@@ -366,6 +389,42 @@ export default function Contacts() {
             style={{ whiteSpace: "nowrap", paddingInline: 16 }}
           >
             {importingGroup ? "Importando..." : "Importar contatos"}
+          </button>
+        </form>
+      </div>
+      {/* Upload Excel */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <h2 className="card-title" style={{ marginBottom: 8 }}>
+          Importar contatos por Excel
+        </h2>
+        <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>
+          Envie um arquivo <b>.xlsx</b> com colunas:
+          <br />
+          <code>nome</code>, <code>telefone</code>, <code>cargo</code>,
+          <code>data_nascimento</code>
+        </p>
+
+        <form
+          onSubmit={handleUploadXlsx}
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <input
+            type="file"
+            accept=".xlsx"
+            onChange={(e) => setXlsxFile(e.target.files?.[0] || null)}
+          />
+
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={!xlsxFile || uploadingXlsx}
+          >
+            {uploadingXlsx ? "Importando..." : "Importar Excel"}
           </button>
         </form>
       </div>
@@ -516,8 +575,7 @@ export default function Contacts() {
           <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>
             Cole uma lista de contatos, um por linha. Formatos aceitos:
             <br />
-            <code>Nome;telefone</code> ou apenas <code>telefone</code>.
-            Ex:
+            <code>Nome;telefone</code> ou apenas <code>telefone</code>. Ex:
           </p>
           <pre
             style={{
